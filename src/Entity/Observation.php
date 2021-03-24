@@ -3,23 +3,31 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation as JMS;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Observation
  *
- * @ORM\Table(name="observation")
  * @ORM\Entity
+ * @ORM\Table(name="observation", uniqueConstraints={@ORM\UniqueConstraint(name="UNIQUE", columns={"datetime"})})
  */
 class Observation
 {
     /**
-     * @var string
-     * @ORM\Id
-     * @ORM\Column(name="datetime", type="string", nullable=false)
-     * @JMS\Type("DateTime<'Y-m-d H:i:s'>")
-     * @Assert\DateTime
+     * @var int
+     * 
+     * @ORM\Id()
+     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\GeneratedValue(strategy="IDENTITY")
+     */
+    private $id;
+
+    /**
+     * @var \DateTime
+     * 
+     * @ORM\Column(name="datetime", type="datetime", nullable=false)
+     * @Assert\DateTime()
+     * @Assert\NotNull()
      */
     private $datetime;
 
@@ -65,9 +73,21 @@ class Observation
      */
     private $extHum;
 
-    public function getDatetime(): string
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getDatetime(): ?\DateTimeInterface
     {
         return $this->datetime;
+    }
+
+    public function setDatetime(\DateTimeInterface $dateTime): self
+    {
+        $this->datetime = $dateTime;
+
+        return $this;
     }
 
     public function getATemp(): ?string
@@ -141,6 +161,4 @@ class Observation
 
         return $this;
     }
-
-
 }

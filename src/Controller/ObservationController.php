@@ -8,6 +8,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Constraints\NotNull;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 /**
  * @Route("/observation", name="observation.")
@@ -30,17 +32,38 @@ class ObservationController extends AbstractController
      */
     public function show(Request $request): Response
     {
-        $datetime = $request->attributes->get('datetime');
-        $observation = $this->getDoctrine()->getRepository(Observation::class)->find($datetime);
+        $form = $this->createFormBuilder(null, [
+            'csrf_protection' => false
+        ])
+            ->add('datetime', DateTimeType::class, [
+                'html5' => false,
+                'input' => 'datetime',
+                'widget' => 'single_text',
+                'format' => 'yyyy-MM-dd HH:mm:ss',
+                'constraints' => new NotNull()
+            ])
+            ->getForm();
+        
+        $form->submit($request->attributes->get('_route_params'));
+
         $response = null;
         $data = [];
 
-        if (is_null($observation)) {
-            $data['data'] = [];
-            $response = $this->json($data, 404);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $observation = $this->getDoctrine()->getRepository(Observation::class)->findBy([
+                'datetime' => $form->getData()['datetime']
+            ]);
+
+            if (empty($observation)) {
+                $data['data'] = [];
+                $response = $this->json($data, 404);
+            } else {
+                $data['data'] = $observation;
+                $response = $this->json($data);
+            }
         } else {
-            $data['data'] = $observation;
-            $response = $this->json($data);
+            $data['data'] = 'Malformed request.';
+            $response = $this->json($data, 400);
         }
 
         return $response;
@@ -58,10 +81,7 @@ class ObservationController extends AbstractController
         $response = null;
         $data = [];
 
-        // dump(json_decode($request->getContent(), true));
-        // dump($observation);
-
-        if ($form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($observation);
             $entityManager->flush();
