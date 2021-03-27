@@ -4,11 +4,12 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * Observation
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="App\Repository\ObservationRepository")
  * @ORM\Table(name="observation", uniqueConstraints={@ORM\UniqueConstraint(name="UNIQUE", columns={"datetime"})})
  */
 class Observation
@@ -24,9 +25,10 @@ class Observation
 
     /**
      * @var \DateTime
-     * 
+     *
      * @ORM\Column(name="datetime", type="datetime", nullable=false)
-     * @Assert\DateTime()
+     * @JMS\Type("DateTime<'Y-m-d H:i:s'>")
+     * @Assert\Type("DateTime")
      * @Assert\NotNull()
      */
     private $datetime;
