@@ -90,7 +90,7 @@ class ObservationController extends AbstractAPIController
         $entityManager->remove($observation);
         $entityManager->flush();
 
-        return $this->defaultView(null, Response::HTTP_OK, 'Observation deleted successfully.', null, true);
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID {$observation->getId()} deleted successfully.", null, true);
     }
 
     /**
@@ -108,7 +108,7 @@ class ObservationController extends AbstractAPIController
         $entityManager->remove($observation);
         $entityManager->flush();
 
-        return $this->defaultView(null, Response::HTTP_OK, 'Observation deleted successfully.', null, true);
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with {$observation->getId()} deleted successfully.", null, true);
     }
 
     /**
@@ -134,7 +134,7 @@ class ObservationController extends AbstractAPIController
             $entityManager->persist($observation);
             $entityManager->flush();
 
-            return $this->defaultView(null, Response::HTTP_CREATED, 'Observation created successfully.', null, true);
+            return $this->defaultView(null, Response::HTTP_CREATED, "Observation created successfully with ID {$observation->getId()}.", null, true);
         } else
             return $this->defaultView(null, Response::HTTP_BAD_REQUEST, null, null, true);
     }
@@ -152,7 +152,7 @@ class ObservationController extends AbstractAPIController
     public function update(Observation $observation, ParamFetcher $paramFetcher)
     {
         if (!$observation)
-            throw $this->createNotFoundException("No observation found for id {$observation->getId()}");
+            throw $this->createNotFoundException("No observation found for ID {$observation->getId()}");
 
         if (!is_null($paramFetcher->get('aTemp')))
             $observation->setATemp($paramFetcher->get('aTemp'));
@@ -174,6 +174,6 @@ class ObservationController extends AbstractAPIController
 
         $this->getDoctrine()->getManager()->flush();
 
-        return $this->defaultView(null, Response::HTTP_OK, 'Observation updated successfully.', null, true);
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID {$observation->getId()} updated successfully.", null, true);
     }
 }
