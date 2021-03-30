@@ -11,11 +11,11 @@ class AbstractAPIController extends AbstractFOSRestController
     {
         if (!$data && !$noContent)
             throw $this->createNotFoundException($errorMessage ? $errorMessage : Response::$statusTexts[Response::HTTP_NOT_FOUND]);
-        
+
         return $this->view([
             'status' => $defaultStatusCode,
             'message' => $message ? $message : Response::$statusTexts[$defaultStatusCode] . '.',
-            'data' => is_array($data) ? $data : [$data]
+            'data' => is_array($data) ? $data : [ $data ]
         ], $defaultStatusCode)
             ->setHeader('Access-Control-Allow-Origin', '*');
     }
