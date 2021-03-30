@@ -16,7 +16,6 @@ class AbstractAPIController extends AbstractFOSRestController
             'status' => $defaultStatusCode,
             'message' => $message ? $message : Response::$statusTexts[$defaultStatusCode] . '.',
             'data' => is_array($data) ? $data : [ $data ]
-        ], $defaultStatusCode)
-            ->setHeader('Access-Control-Allow-Origin', '*');
+        ], $defaultStatusCode);
     }
 }
