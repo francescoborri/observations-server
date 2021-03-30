@@ -85,12 +85,14 @@ class ObservationController extends AbstractAPIController
 
         if (!$observation)
             throw $this->createNotFoundException("No observation found for datetime {$datetime->format('Y-m-d H:i:s')}.");
+        
+        $id = $observation->getId();
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($observation);
         $entityManager->flush();
 
-        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID {$observation->getId()} deleted successfully.", null, true);
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID $id deleted successfully.", null, true);
     }
 
     /**
@@ -108,7 +110,7 @@ class ObservationController extends AbstractAPIController
         $entityManager->remove($observation);
         $entityManager->flush();
 
-        return $this->defaultView(null, Response::HTTP_OK, "Observation with {$observation->getId()} deleted successfully.", null, true);
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with $id deleted successfully.", null, true);
     }
 
     /**
