@@ -7,6 +7,8 @@ This REST web service is the back-end layer for the enviromental data monitor, d
 - Gabriel Scantee
 - [Filippo Sonnati](https://github.com/filipposonnati)
 
+It is expected to be used with the [client web-app](https://github.com/Leofatto7/ClientRest).
+
 ## Getting started
 
 ### Prerequisites
