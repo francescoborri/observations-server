@@ -18,6 +18,7 @@ use FOS\RestBundle\Controller\Annotations\Put;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\View\View;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 
 /**
  * @Route("/observation", name="observation.")
@@ -25,30 +26,46 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 class ObservationController extends AbstractAPIController
 {
     /**
-     * @Get("/list", name="list")
+     * @Get("s/", name="list")
      * @QueryParam(name="orderby", requirements="(datetime|id)", default="datetime")
      * @QueryParam(name="sort", requirements="(asc|desc)", default="asc")
      * @QueryParam(name="start", default=null, nullable=true)
      * @QueryParam(name="end", default=null, nullable=true)
+     * @QueryParam(name="day", strict=false, nullable=true, default=null, requirements="([1-9]|[12]\d|3[01])")
+     * @QueryParam(name="month", strict=false, nullable=true, default=null, requirements="([1-9]|1[012])")
+     * @QueryParam(name="year", strict=false, nullable=true, default=null, requirements="\d\d\d\d")
      * @ParamConverter("start", isOptional="true", options={"format": "Y-m-d H:i:s"})
      * @ParamConverter("end", isOptional="true", options={"format": "Y-m-d H:i:s"})
      * @ViewAnnotation()
      */
     public function list(ParamFetcher $paramFetcher, ObservationRepository $observationRepository, ?\DateTime $start = null, ?\DateTime $end = null): View
     {
-        $observationList = $observationRepository->findAllWithCriteria(
+        $observations = $observationRepository->findAllWithCriteria(
             $paramFetcher->get('orderby'),
             $paramFetcher->get('sort'),
             $start,
-            $end
+            $end,
+            $paramFetcher->get('day'),
+            $paramFetcher->get('month'),
+            $paramFetcher->get('year')
         );
 
-        return $this->defaultView($observationList, Response::HTTP_OK, null, 'No observation found.');
+        return $this->defaultView($observations, Response::HTTP_OK);
     }
 
     /**
-     * @Get("/find", name="find_by_datetime")
-     * @QueryParam(name="datetime", strict=true, nullable=true, default=null)
+     * @Get("/{id}", name="find", requirements={"id"="\d+"})
+     * @ViewAnnotation()
+     */
+    public function find(int $id, ObservationRepository $observationRepository): View
+    {
+        $observation = $observationRepository->find($id);
+        return $this->defaultView($observation, Response::HTTP_OK);
+    }
+
+    /**
+     * @Get("/", name="find_by_datetime")
+     * @QueryParam(name="datetime", strict=true, nullable=false)
      * @ParamConverter("datetime", options={"format": "Y-m-d H:i:s"})
      * @ViewAnnotation()
      */
@@ -58,63 +75,11 @@ class ObservationController extends AbstractAPIController
             'datetime' => $datetime
         ]);
 
-        return $this->defaultView($observation, Response::HTTP_OK, null, "No observation found for datetime {$datetime->format('Y-m-d H:i:s')}.");
+        return $this->defaultView($observation, Response::HTTP_OK);
     }
 
     /**
-     * @Get("/{id}", name="find")
-     * @ViewAnnotation()
-     */
-    public function find(int $id, ObservationRepository $observationRepository): View
-    {
-        $observation = $observationRepository->find($id);
-        return $this->defaultView($observation, Response::HTTP_OK, null, "No observation found for id {$id}.");
-    }
-
-    /**
-     * @Delete("/delete", name="delete_by_datetime")
-     * @QueryParam(name="datetime", strict=true, nullable=false)
-     * @ParamConverter("datetime", options={"format": "Y-m-d H:i:s"})
-     * @ViewAnnotation()
-     */
-    public function deleteByDatetime(\DateTime $datetime, ObservationRepository $observationRepository)
-    {
-        $observation = $observationRepository->findOneBy([
-            'datetime' => $datetime
-        ]);
-
-        if (!$observation)
-            throw $this->createNotFoundException("No observation found for datetime {$datetime->format('Y-m-d H:i:s')}.");
-        
-        $id = $observation->getId();
-
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->remove($observation);
-        $entityManager->flush();
-
-        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID $id deleted successfully.", null, true);
-    }
-
-    /**
-     * @Delete("/{id}", name="delete")
-     * @ViewAnnotation()
-     */
-    public function delete(int $id, ObservationRepository $observationRepository): View
-    {
-        $observation = $observationRepository->find($id);
-
-        if (!$observation)
-            throw $this->createNotFoundException("No observation found for id $id.");
-
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->remove($observation);
-        $entityManager->flush();
-
-        return $this->defaultView(null, Response::HTTP_OK, "Observation with $id deleted successfully.", null, true);
-    }
-
-    /**
-     * @Post("/create", name="create")
+     * @Post("/new", name="new")
      * @RequestParam(name="datetime", strict=true, nullable=false)
      * @ParamConverter("datetime", options={"format": "Y-m-d H:i:s"})
      * @RequestParam(name="aTemp", requirements="[+-]?([0-9]*[.])?[0-9]+", nullable=true, default=null)
@@ -125,24 +90,28 @@ class ObservationController extends AbstractAPIController
      * @RequestParam(name="extHum", requirements="\d+", nullable=true, default=null)
      * @ViewAnnotation()
      */
-    public function create(ParamFetcher $paramFetcher): View
+    public function new(ParamFetcher $paramFetcher): View
     {
         $observation = new Observation();
         $form = $this->createForm(ObservationType::class, $observation);
         $form->submit($paramFetcher->all());
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($observation);
-            $entityManager->flush();
+            try {
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($observation);
+                $entityManager->flush();
+            } catch (UniqueConstraintViolationException $exception) {
+                return $this->defaultView(null, Response::HTTP_CONFLICT, null, true);
+            }
 
-            return $this->defaultView(null, Response::HTTP_CREATED, "Observation created successfully with ID {$observation->getId()}.", null, true);
+            return $this->defaultView(null, Response::HTTP_CREATED, "Observation created with ID {$observation->getId()}.", true);
         } else
-            return $this->defaultView(null, Response::HTTP_BAD_REQUEST, null, null, true);
+            return $this->defaultView(null, Response::HTTP_BAD_REQUEST, null, true);
     }
 
     /**
-     * @Put("/{id}", name="update")
+     * @Put("/{id}", name="update", requirements={"id"="\d+"})
      * @RequestParam(name="aTemp", requirements="[+-]?([0-9]*[.])?[0-9]+", nullable=true, default=null)
      * @RequestParam(name="aHum", requirements="\d+", nullable=true, default=null)
      * @RequestParam(name="bTemp", requirements="[+-]?([0-9]*[.])?[0-9]+", nullable=true, default=null)
@@ -176,6 +145,48 @@ class ObservationController extends AbstractAPIController
 
         $this->getDoctrine()->getManager()->flush();
 
-        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID {$observation->getId()} updated successfully.", null, true);
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID {$observation->getId()} updated successfully.", true);
+    }
+
+    /**
+     * @Delete("/{id}", name="delete", requirements={"id"="\d+"})
+     * @ViewAnnotation()
+     */
+    public function delete(int $id, ObservationRepository $observationRepository): View
+    {
+        $observation = $observationRepository->find($id);
+
+        if (!$observation)
+            throw $this->createNotFoundException("No observation found for id $id.");
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->remove($observation);
+        $entityManager->flush();
+
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with $id deleted successfully.", true);
+    }
+
+    /**
+     * @Delete("/", name="delete_by_datetime")
+     * @QueryParam(name="datetime", strict=true, nullable=false)
+     * @ParamConverter("datetime", options={"format": "Y-m-d H:i:s"})
+     * @ViewAnnotation()
+     */
+    public function deleteByDatetime(\DateTime $datetime, ObservationRepository $observationRepository)
+    {
+        $observation = $observationRepository->findOneBy([
+            'datetime' => $datetime
+        ]);
+
+        if (!$observation)
+            throw $this->createNotFoundException("No observation found for datetime {$datetime->format('Y-m-d H:i:s')}.");
+
+        $id = $observation->getId();
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->remove($observation);
+        $entityManager->flush();
+
+        return $this->defaultView(null, Response::HTTP_OK, "Observation with ID $id deleted successfully.", true);
     }
 }

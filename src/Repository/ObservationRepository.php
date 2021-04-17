@@ -13,7 +13,7 @@ class ObservationRepository extends ServiceEntityRepository
         parent::__construct($registry, Observation::class);
     }
 
-    public function findAllWithCriteria(string $field = null, string $sort = null, \DateTime $start = null, \DateTime $end = null)
+    public function findAllWithCriteria(string $field = null, string $sort = null, \DateTime $start = null, \DateTime $end = null, int $day = null, int $month = null, int $year = null)
     {
         $queryBuilder = $this->createQueryBuilder('observation');
 
@@ -29,6 +29,21 @@ class ObservationRepository extends ServiceEntityRepository
             $queryBuilder
                 ->andWhere('observation.datetime <= :end')
                 ->setParameter('end', $end);
+
+        if (!is_null($day))
+            $queryBuilder
+                ->andWhere('DAY(observation.datetime) = :day')
+                ->setParameter('day', $day);
+
+        if (!is_null($month))
+            $queryBuilder
+                ->andWhere('MONTH(observation.datetime) = :month')
+                ->setParameter('month', $month);
+
+        if (!is_null($year))
+            $queryBuilder
+                ->andWhere('YEAR(observation.datetime) = :year')
+                ->setParameter('year', $year);
 
         return $queryBuilder
             ->getQuery()

@@ -3,8 +3,6 @@ fos_rest:
     view:
         view_response_listener: true
     body_listener: true
-    service:
-        serializer: null
     format_listener:
         enabled: true
         rules:
@@ -15,10 +13,4 @@ fos_rest:
                   prefer_extension: true,
               }
     exception:
-        codes:
-            'Symfony\Component\Routing\Exception\ResourceNotFoundException': HTTP_NOT_FOUND
-            'Symfony\Component\HttpKernel\Exception\NotFoundHttpException': HTTP_NOT_FOUND
-            'Doctrine\DBAL\Exception\UniqueConstraintViolationException': HTTP_CONFLICT
-        messages:
-            'Symfony\Component\HttpKernel\Exception\NotFoundHttpException': true
-            'Doctrine\DBAL\Exception\UniqueConstraintViolationException': true
+        enabled: true
