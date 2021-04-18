@@ -65,7 +65,7 @@ Follow the steps below to install and run locally the web service.
   symfony serve
   ```
 
-### Usage
+## Usage
 This web service provides the standard methods required by the REST architecture:
 - **Read**
 
@@ -74,7 +74,8 @@ This web service provides the standard methods required by the REST architecture
     - `orderby`, which can be `datetime` or `id` and it's the field used to sort the observations;
     - `sort`, which can be `asc` or `desc` and tells to the web service whether to sort in an ascending or descending way;
     - `start` and `end`, both `yyyy-MM-dd HH:ii:ss` formatted date in order to restrict the period of the observations;
-    - `day`, `month`, and `year`, which are all integers allowing you to grep only observations within a certain day, month or year.
+    - `day`, `month`, and `year`, which are all integers in order to find only observations in a certain day, month or year;
+    - `results` allows you to limit the number of observations in the response.
   - If you want a single observation given its id, you can simply follow the URL `https://host:port/observation/id` and replace the id.
   - There is also a third option which allows you to find a specific observation gived its `datetime`, you can achieve it by sending a GET request to the URL `https://host:port/observation/` and attach a `datetime` query parameter with a `yyyy-MM-dd HH:ii:ss` formatted date.
 - **Create**
@@ -109,5 +110,5 @@ This web service provides the standard methods required by the REST architecture
   - To delete an observation you can simply send a DELETE request to the URL `https://host:port/observation/id`.
   - You can also delete an observation given its datetime, by sending a DELETE request `https://host:port/observation/` attaching a `datetime` query parameter with the `yyyy-MM-dd HH:ii:ss` formatted desired date.
 
-### Learn more
-You can learn more [here](https://www.postman.com/francescoborri/workspace/observations-rest-web-service/overview). Also, a demo version of the web service is hosted [here](https://francescoborri.ddns.net:8000/observation/list).
+## Learn more
+You can learn more [here](https://www.postman.com/francescoborri/workspace/observations-rest-web-service/overview). Also, a demo version of the web service is hosted [here](https://francescoborri.ddns.net:8000/observations/?results=100).

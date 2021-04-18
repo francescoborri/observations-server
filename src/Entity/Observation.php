@@ -27,7 +27,6 @@ class Observation
      * @var \DateTime
      *
      * @ORM\Column(name="datetime", type="datetime", nullable=false)
-     * @JMS\Type("DateTime<'Y-m-d H:i:s'>")
      * @Assert\Type("DateTime")
      * @Assert\NotNull()
      */

@@ -34,6 +34,7 @@ class ObservationController extends AbstractAPIController
      * @QueryParam(name="day", strict=false, nullable=true, default=null, requirements="([1-9]|[12]\d|3[01])")
      * @QueryParam(name="month", strict=false, nullable=true, default=null, requirements="([1-9]|1[012])")
      * @QueryParam(name="year", strict=false, nullable=true, default=null, requirements="\d\d\d\d")
+     * @QueryParam(name="results", strict=false, nullable=true, default=null, requirements="\d+")
      * @ParamConverter("start", isOptional="true", options={"format": "Y-m-d H:i:s"})
      * @ParamConverter("end", isOptional="true", options={"format": "Y-m-d H:i:s"})
      * @ViewAnnotation()
@@ -47,7 +48,8 @@ class ObservationController extends AbstractAPIController
             $end,
             $paramFetcher->get('day'),
             $paramFetcher->get('month'),
-            $paramFetcher->get('year')
+            $paramFetcher->get('year'),
+            $paramFetcher->get('results')
         );
 
         return $this->defaultView($observations, Response::HTTP_OK);
